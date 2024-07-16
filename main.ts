@@ -22,14 +22,14 @@ options:
 }
 
 async function csv2pot(csv_path: string, po: boolean = true, add: string): Promise<void> {
-	const file = await Deno.open(csv_path);
+	using file = await Deno.open(csv_path);
 	const po_obj: {
 		[key: string]: string
 	} = {};
 	let pot_text: string = 'msgid ""\nmsgstr ""\n';
 
 	for await (const obj of readCSVObjects(file, {
-		lineSeparator: "\r\n",
+		lineSeparator: (await Deno.readTextFile(csv_path)).includes("\r") ? "\r\n" : "\n",
 		columnSeparator: args.s ?? ","
 	})) {
 		if (add === "true") {
@@ -64,7 +64,6 @@ msgstr ""
 		}
 	}
 
-	file.close();
 	const pot_path: string = `${dirname(csv_path)}/${basename(csv_path, ".csv")}.pot`;
 	await Deno.writeTextFile(pot_path, pot_text);
 	console.log(`已创建 ${pot_path}`);
