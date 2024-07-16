@@ -1,5 +1,7 @@
 # csv2pot
 
+- `csv2pot [options] <csv_path>`
+
 将godot csv翻译文件转换为pot文件，并生成po文件
 
 ## 选项
