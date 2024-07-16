@@ -1,5 +1,5 @@
 {
   "tasks": {
-    "compile": "deno compile --allow-read --allow-write ./main.ts"
+    "compile": "deno compile --allow-read --allow-write ./main.ts --output ./output/"
   }
 }
