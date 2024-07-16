@@ -35,3 +35,15 @@ jobs:
 
       - name: Run compile
         run: deno task compile
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: csv2pot-linux
+          path: output/csv2pot
+          if-no-files-found: ignore
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: csv2pot-win
+          path: output/csv2pot.exe
+          if-no-files-found: ignore
