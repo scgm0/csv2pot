@@ -1,19 +1,20 @@
 import { parseArgs } from "jsr:@std/cli/parse-args";
-import { readCSVObjects } from "jsr:@vslinko/csv";
 import { basename, dirname } from "jsr:@std/path";
+import { parse } from "jsr:@std/csv";
 
 const args = parseArgs(Deno.args);
 args.c ??= args["create-po"] ?? "true";
 args.a ??= args.add ?? "true";
 
 if (args.help || args.h) {
-	console.log(`csv2pot [options] <csv_path>
+	console.log(`
+csv2pot [options] <csv_path>
 将godot csv翻译文件转换为pot文件，并生成po文件
 options:
-  --help, -h 显示帮助信息
-  --separator, -s <separator> csv文件分隔符，默认为','
-  --create-po, -c <true|false> 是否生成po文件，默认true
-  --add, -a <true|false|key> 是否将csv文件中的翻译写入pot文件，默认true会将csv文件中的第一个翻译pot文件，如果为false，则不写入，如果为key，则将csv文件中的key对应的翻译写入pot文件`
+	--help, -h 显示帮助信息
+	--separator, -s <separator> csv文件分隔符，默认为','
+	--create-po, -c <true|false> 是否生成po文件，默认true
+	--add, -a <true|false|key> 是否将csv文件中的翻译写入pot文件，默认true会将csv文件中的第一个翻译pot文件，如果为false，则不写入，如果为key，则将csv文件中的key对应的翻译写入pot文件`
 	);
 
 } else {
@@ -22,16 +23,18 @@ options:
 }
 
 async function csv2pot(csv_path: string, po: boolean = true, add: string): Promise<void> {
-	using file = await Deno.open(csv_path);
+	let pot_text: string = 'msgid ""\nmsgstr ""\n';
 	const po_obj: {
 		[key: string]: string
 	} = {};
-	let pot_text: string = 'msgid ""\nmsgstr ""\n';
+	const csv_text = await Deno.readTextFile(csv_path);
+	const csv_arr = parse(csv_text, {
+		separator: args.s ?? ",",
+		skipFirstRow: true,
+		strip: true,
+	});
 
-	for await (const obj of readCSVObjects(file, {
-		lineSeparator: (await Deno.readTextFile(csv_path)).includes("\r") ? "\r\n" : "\n",
-		columnSeparator: args.s ?? ","
-	})) {
+	for (const obj of csv_arr) {
 		if (add === "true") {
 			pot_text += `\nmsgid "${obj.keys}"\nmsgstr "${obj[Object.keys(obj)[1]]}"\n`;
 		} else if (add === "false") {
@@ -72,7 +75,6 @@ msgstr ""
 		for (const key in po_obj) {
 			const po_path: string = `${dirname(csv_path)}/${key}.po`;
 			await Deno.writeTextFile(po_path, po_obj[key]);
-
 			console.log(`已创建 ${po_path}`);
 		}
 	}
