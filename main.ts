@@ -3,6 +3,7 @@ import { basename, dirname } from "jsr:@std/path";
 import { parse } from "jsr:@std/csv";
 
 const args = parseArgs(Deno.args);
+args.m ??= args["multiline-text"] ?? "true";
 args.c ??= args["create-po"] ?? "true";
 args.a ??= args.add ?? "true";
 
@@ -13,16 +14,17 @@ csv2pot [options] <csv_path>
 options:
 	--help, -h 显示帮助信息
 	--separator, -s <separator> csv文件分隔符，默认为','
+	--multiline-text, -m <true|false> 是否分割多行文本，默认为true
 	--create-po, -c <true|false> 是否生成po文件，默认true
 	--add, -a <true|false|key> 是否将csv文件中的翻译写入pot文件，默认true会将csv文件中的第一个翻译pot文件，如果为false，则不写入，如果为key，则将csv文件中的key对应的翻译写入pot文件`
 	);
 
 } else {
-	await csv2pot(args._[0] as string, JSON.parse(args.c), args.a);
+	await csv2pot(args._[0] as string, JSON.parse(args.c), args.a, JSON.parse(args.m));
 	console.log("完成");
 }
 
-async function csv2pot(csv_path: string, po: boolean = true, add: string): Promise<void> {
+async function csv2pot(csv_path: string, po: boolean, add: string, multiline: boolean): Promise<void> {
 	let pot_text: string = 'msgid ""\nmsgstr ""\n';
 	const po_obj: {
 		[key: string]: string
@@ -32,16 +34,16 @@ async function csv2pot(csv_path: string, po: boolean = true, add: string): Promi
 		separator: args.s ?? ",",
 		skipFirstRow: true,
 		strip: true,
-	});
+	}) as Record<string, string> [];
 
 	for (const obj of csv_arr) {
-		const keys: string = Object.keys(obj)[0];
+		const keys = Object.keys(obj)[0];
 		if (add === "true") {
-			pot_text += `\nmsgid "${obj[keys]}"\nmsgstr "${obj[Object.keys(obj)[1]]}"\n`;
+			pot_text += `\nmsgid "${obj[keys]}"\nmsgstr "${multiline ? obj[Object.keys(obj)[1]].replaceAll("\\n", '\\n"\n"') : obj[Object.keys(obj)[1]]}"\n`;
 		} else if (add === "false") {
 			pot_text += `\nmsgid "${obj[keys]}"\nmsgstr ""\n`;
 		} else if (add in obj) {
-			pot_text += `\nmsgid "${obj[keys]}"\nmsgstr "${obj[add]}"\n`;
+			pot_text += `\nmsgid "${obj[keys]}"\nmsgstr "${multiline ? obj[add].replaceAll("\\n", '\\n"\n"') : obj[add]}"\n`;
 		} else {
 			throw new Error(`${csv_path}: 未找到key为'${add}'的翻译`);
 		}
@@ -62,7 +64,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\\n"
 "X-Generator: Poedit 3.4.2\\n"
 `
-					po_obj[key] += `\nmsgid "${obj[keys]}"\nmsgstr "${obj[key]}"\n`;
+					po_obj[key] += `\nmsgid "${obj[keys]}"\nmsgstr "${multiline ? obj[key].replaceAll("\\n", '\\n"\n"') : obj[key]}"\n`;
 				}
 			}
 		}
