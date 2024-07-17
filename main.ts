@@ -35,19 +35,20 @@ async function csv2pot(csv_path: string, po: boolean = true, add: string): Promi
 	});
 
 	for (const obj of csv_arr) {
+		const keys: string = Object.keys(obj)[0];
 		if (add === "true") {
-			pot_text += `\nmsgid "${obj.keys}"\nmsgstr "${obj[Object.keys(obj)[1]]}"\n`;
+			pot_text += `\nmsgid "${obj[keys]}"\nmsgstr "${obj[Object.keys(obj)[1]]}"\n`;
 		} else if (add === "false") {
-			pot_text += `\nmsgid "${obj.keys}"\nmsgstr ""\n`;
+			pot_text += `\nmsgid "${obj[keys]}"\nmsgstr ""\n`;
 		} else if (add in obj) {
-			pot_text += `\nmsgid "${obj.keys}"\nmsgstr "${obj[add]}"\n`;
+			pot_text += `\nmsgid "${obj[keys]}"\nmsgstr "${obj[add]}"\n`;
 		} else {
 			throw new Error(`${csv_path}: 未找到key为'${add}'的翻译`);
 		}
 
 		if (po) {
 			for (const key in obj) {
-				if (key !== "keys") {
+				if (key !== keys) {
 					po_obj[key] ??= `msgid ""
 msgstr ""
 "Project-Id-Version: \\n"
@@ -61,7 +62,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\\n"
 "X-Generator: Poedit 3.4.2\\n"
 `
-					po_obj[key] += `\nmsgid "${obj.keys}"\nmsgstr "${obj[key]}"\n`;
+					po_obj[key] += `\nmsgid "${obj[keys]}"\nmsgstr "${obj[key]}"\n`;
 				}
 			}
 		}
