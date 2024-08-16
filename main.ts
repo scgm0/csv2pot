@@ -64,7 +64,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\\n"
 "X-Generator: Poedit 3.4.2\\n"
 `
-					po_obj[key] += `\nmsgid "${obj[keys]}"\nmsgstr "${multiline ? obj[key].replaceAll("\\n", '\\n"\n"') : obj[key]}"\n`;
+					po_obj[key] += `\nmsgid "${obj[keys]}"\nmsgstr "${multiline ? obj[key].replaceAll("\"","\\\"").replaceAll("\\n", '\\n"\n"') : obj[key].replaceAll("\"","\\\"")}"\n`;
 				}
 			}
 		}
